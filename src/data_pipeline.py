@@ -2,6 +2,8 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
+from sqlalchemy.engine import URL  # add this to your imports at the top
+
 
 # 1. RESOLVE ABSOLUTE PATH TO THE .ENV FILE TO PREVENT STREAMLIT LOAD FAILURES
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,10 +28,22 @@ def get_db_engine():
     db_port = int(db_port_raw)
     
     # FORCE EXPLICIT PSYCOPG2 DRIVER MAPPING TO FIX THE MISSING CLOUD DRIVER ERROR
-    #connection_string = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    connection_string = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    # connection_string = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    # return create_engine(connection_string)
 
-    return create_engine(connection_string)
+    url = URL.create(
+        drivername="postgresql+psycopg2",
+        username=db_user,
+        password=db_password,
+        host=db_host,
+        port=db_port,
+        database=db_name,
+    )
+    return create_engine(
+        url,
+        connect_args={"sslmode": "require"},
+        pool_pre_ping=True,
+    )
 
 def extract_data_from_db():
     """Queries live log tables from pgAdmin views into a reusable DataFrame."""
