@@ -8,3 +8,5 @@ sqlalchemy
 psycopg2-binary
 python-dotenv
 joblib
+psycopg2-binary
+sqlalchemy
