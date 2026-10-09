@@ -37,7 +37,7 @@ kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
 kpi_col1.metric(label="Total Tracked Fleet Assets", value=f"{total_fleet_units} Heavy Trucks")
 kpi_col2.metric(label="Active Moving Delivery Vectors", value=f"{len(active_moving_df)} Snapshots", delta="Cruising Norm")
 kpi_col3.metric(label="Highway Delays / Unscheduled Stops", value=f"{len(highway_stalls_df)} Flagged Logs", delta="Risk Level", delta_color="inverse")
-kpi_col4.metric(label="Flagged Fuel Siphoning Incidents", value=f"{len(theft_anomalies_df)} Anomalies", delta="Financial Leakage", delta_color="inverse")
+kpi_col4.metric(label="Sudden Fuel Level Drop Events", value=f"{len(theft_anomalies_df)} Anomalies", delta="Financial Leakage", delta_color="inverse")
 
 # ==========================================
 # 3. SMART ASSET VERIFICATION & SEARCH TOOL
@@ -96,7 +96,7 @@ if search_query:
 # ==========================================
 st.markdown("---")
 st.markdown("### 🗃️ Management Incident Investigation Terminal")
-st.markdown("Click the options below to instantly inspect blacklisted asset logs, trace vehicle operational contexts, and pull driver IDs for questioning.")
+st.markdown("Click the options below to instantly inspect blacklisted asset logs, trace vehicle operational contexts, and pull driver IDs for follow-up.")
 
 audit_btn_col1, audit_btn_col2 = st.columns(2)
 
@@ -113,8 +113,8 @@ with audit_btn_col1:
             st.info("No highway stalls recorded in current data frame matching filter.")
 
 with audit_btn_col2:
-    if st.button(f"⛽ View Fuel Theft Audit ({len(theft_anomalies_df)} Anomalies)", use_container_width=True):
-        st.subheader("📋 Security Audit: Flagged Volumetric Fuel Drainage")
+    if st.button(f"⛽ View Fuel Drop Audit ({len(theft_anomalies_df)} Anomalies)", use_container_width=True):
+        st.subheader("📋 Flagged Fuel Level Drop Events")
         if not theft_anomalies_df.empty:
             theft_display_df = theft_anomalies_df[[
                 "timestamp", "truck_id", "driver_on_duty", "fleet_status", 
@@ -198,7 +198,7 @@ with input_col1:
         st.markdown("#### 📝 Telemetry Input Frame Sent to Model:")
         st.json({
             "Asset ID": selected_truck,
-            "Driver Accountable": active_driver,
+            "Assigned Driver": active_driver,
             "Velocity Metrics": f"{speed_input} KM/H",
             "Thermal Reading": f"{temp_input} °C",
             "Engine Wear State": f"{service_input} Run-Hours",
@@ -274,7 +274,7 @@ with input_col2:
             st.info(f"Predicted Travel Window: **{round(eta, 2)} Hours**")
             
     with col_btn2:
-        if st.button("Check Fuel Tank Security Integrity"):
+        if st.button("Check Fuel Level Integrity Check"):
             active_driver_2 = assign_driver_to_truck(selected_truck_2)
             
             st.markdown("#### 📝 Security State Snapshot:")
@@ -289,6 +289,6 @@ with input_col2:
             # Map down back to model format expectation constraints
             theft_risk = predict_fuel_theft_risk(speed_input, temp_input, target_corridor, live_fleet_status.lower())
             if theft_risk >= 0.75:
-                st.error(f"🚨 THEFT HIGH RISK FLAG: {round(theft_risk * 100, 2)}% probability of ongoing fuel siphoning.")
+                st.error(f"🚨 HIGH FUEL ANOMALY RISK: {round(theft_risk * 100, 2)}% probability of ongoing fuel siphoning.")
             else:
                 st.success(f"✅ Tank Volume Secure. Theft Anomaly Risk: {round(theft_risk * 100, 2)}%")
