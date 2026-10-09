@@ -62,7 +62,7 @@ if search_query:
     
     if matched_trucks:
         verified_id = matched_trucks[0]
-        st.success(f"✅ Valid Asset Verified: Match found for asset reference **'{verified_id.upper()}'** in pgAdmin registry.")
+        st.success(f"✅ Valid Asset Verified: Match found for asset reference **'{verified_id.upper()}'** in fleet registry.")
         
         # Isolate latest log entry for the searched vehicle
         truck_history = df_logs[df_logs["truck_id"] == verified_id].sort_values(by="timestamp", ascending=False)
@@ -137,7 +137,7 @@ st.markdown("---")
 viz_col1, viz_col2 = st.columns(2)
 
 with viz_col1:
-    st.subheader("📊 Fleet Status Overviewt")
+    st.subheader("📊 Fleet Status Overview")
     status_summary = df_logs.groupby("fleet_status")["truck_id"].count().reset_index().rename(columns={"truck_id": "log_count"})
     fig_pie = px.pie(status_summary, names="fleet_status", values="log_count", hole=0.45, color_discrete_sequence=px.colors.sequential.Bluyl_r)
     st.plotly_chart(fig_pie, use_container_width=True)
