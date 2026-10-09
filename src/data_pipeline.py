@@ -3,17 +3,29 @@ import pandas as pd
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
-# Load background credentials from hidden environment file
-load_dotenv()
+# 1. RESOLVE ABSOLUTE PATH TO THE .ENV FILE TO PREVENT STREAMLIT LOAD FAILURES
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(BASE_DIR, ".env")
+load_dotenv(dotenv_path=env_path)
 
 def get_db_engine():
     """Builds a secure, isolated connection pool to the PostgreSQL database."""
     db_user = os.getenv("DB_USER")
     db_password = os.getenv("DB_PASSWORD")
     db_host = os.getenv("DB_HOST")
-    db_port = os.getenv("DB_PORT")
+    db_port_raw = os.getenv("DB_PORT")
     db_name = os.getenv("DB_NAME")
     
+    # SAFE FALLBACK: If environment variables failed to load, prevent app crash
+    if not all([db_user, db_password, db_host, db_port_raw, db_name]):
+        raise RuntimeError(
+            "Critical Error: Environment credentials failed to load. "
+            "Ensure your hidden '.env' file or Streamlit Cloud Secrets are properly configured."
+        )
+        
+    db_port = int(db_port_raw)
+    
+    # FORCE EXPLICIT PSYCOPG2 DRIVER MAPPING TO FIX THE MISSING CLOUD DRIVER ERROR
     connection_string = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     return create_engine(connection_string)
 
@@ -51,9 +63,7 @@ def load_csv_to_db(csv_path="fleet_telematics_database.csv"):
 if __name__ == "__main__":
     print("🚀 Triggering Data Pipeline ETL Stream to PostgreSQL...")
     try:
-        # Resolves file paths correctly even if running from subdirectories
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        target_csv = os.path.join(base_dir, "fleet_telematics_database.csv")
+        target_csv = os.path.join(BASE_DIR, "fleet_telematics_database.csv")
         
         if not os.path.exists(target_csv):
             # Fallback to local string check if path building resolves differently
