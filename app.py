@@ -5,9 +5,13 @@ from src.data_pipeline import extract_data_from_db
 from src.inference import predict_breakdown_risk, predict_transit_duration, predict_fuel_theft_risk, assign_driver_to_truck
 
 # 1. Platform Layout Configuration
-st.set_page_config(layout="wide", page_title="Downstream Telematics Tower")
-st.title("🛢️ Downstream Oil & Gas Intelligent Fleet Telematics Platform")
-st.markdown("Enterprise Operations Control Center mapping Asset Integrity, Fuel Security Anomalies, and Real-Time Predictive Transit Windows.")
+# st.set_page_config(layout="wide", page_title="Downstream Telematics Tower")
+# st.title("🛢️ Downstream Oil & Gas Intelligent Fleet Telematics Platform")
+# st.markdown("Enterprise Operations Control Center mapping Asset Integrity, Fuel Security Anomalies, and Real-Time Predictive Transit Windows.")
+
+st.set_page_config(layout="wide", page_title="Fleet Telematics Control Center")
+st.title("🛢️ Oil & Gas Fleet Telematics Control Center")
+st.caption("Monitor asset health, fuel level anomalies, and predicted transit times in one place.")
 
 # Safely extract dynamic log views from Database Pipeline module
 try:
@@ -43,7 +47,7 @@ kpi_col4.metric(label="Sudden Fuel Level Drop Events", value=f"{len(theft_anomal
 # 3. SMART ASSET VERIFICATION & SEARCH TOOL
 # ==========================================
 st.markdown("---")
-st.markdown("### 🔍 Enterprise Asset Registry Verification")
+st.markdown("### 🔍 Truck Lookup")
 search_query = st.text_input("Validate Truck ID registry existence (e.g., 1003 or OG-FLEET-1003):", placeholder="Type digits or full vehicle key here...").strip().lower()
 
 # Default fallback values for workspace simulations
@@ -95,14 +99,14 @@ if search_query:
 # 4. INTERACTIVE SECURITY DRILL-DOWN AUDIT BUTTONS
 # ==========================================
 st.markdown("---")
-st.markdown("### 🗃️ Management Incident Investigation Terminal")
-st.markdown("Click the options below to instantly inspect blacklisted asset logs, trace vehicle operational contexts, and pull driver IDs for follow-up.")
+st.markdown("### 🗃️ Incident Review Center")
+st.markdown("Review flagged trucks, check their trip context, and find the assigned driver for follow-up.")
 
 audit_btn_col1, audit_btn_col2 = st.columns(2)
 
 with audit_btn_col1:
     if st.button(f"🚨 View Highway Delays ({len(highway_stalls_df)} Logs)", use_container_width=True):
-        st.subheader("📋 Roadside Stalls: Active Highway Interceptions Audit")
+        st.subheader("📋 🚧 Highway Stops & Delays")
         if not highway_stalls_df.empty:
             delay_display_df = highway_stalls_df[[
                 "timestamp", "truck_id", "driver_on_duty", "origin_depot", 
@@ -133,13 +137,13 @@ st.markdown("---")
 viz_col1, viz_col2 = st.columns(2)
 
 with viz_col1:
-    st.subheader("📊 Macro Fleet Distribution Footprint")
+    st.subheader("📊 Fleet Status Overviewt")
     status_summary = df_logs.groupby("fleet_status")["truck_id"].count().reset_index().rename(columns={"truck_id": "log_count"})
     fig_pie = px.pie(status_summary, names="fleet_status", values="log_count", hole=0.45, color_discrete_sequence=px.colors.sequential.Bluyl_r)
     st.plotly_chart(fig_pie, use_container_width=True)
 
 with viz_col2:
-    st.subheader("⛽ Volumetric Product Loss by Distribution Depot")
+    st.subheader("⛽ Fuel Level Drops by Depot")
     theft_by_depot = df_logs[df_logs["fuel_theft_anomaly"] == 1].groupby("origin_depot")["fuel_volume_lost_liters"].sum().reset_index()
     if not theft_by_depot.empty:
         fig_bar = px.bar(theft_by_depot, x="origin_depot", y="fuel_volume_lost_liters", color="origin_depot",
@@ -157,19 +161,19 @@ st.markdown("---")
 # ==========================================
 # 6. SYNCHRONIZED PREDICTIVE WORKSPACE (SMART DROP-DOWNS)
 # ==========================================
-st.header("🧠 Live Diagnostic & Dynamic Dispatch Terminal")
-st.markdown("Select a **flagged blacklisted truck** directly from the audit targets below to dynamically pull its active telemetry state into the machine learning engine.")
+st.header("Live Diagnostics & Dispatch")
+st.markdown("Select a flagged truck to load its latest telemetry into the prediction models.")
 
 input_col1, input_col2 = st.columns(2)
 
 with input_col1:
-    st.subheader("🔧 Telemetry Mechanical Breakdown Forecaster")
+    st.subheader("🔧 Breakdown Risk Check")
     
     # Filter ONLY Truck IDs that are actively sitting in the Highway Delays pool
     banned_breakdown_trucks = sorted(highway_stalls_df["truck_id"].unique().tolist())
     
     if banned_breakdown_trucks:
-        selected_truck = st.selectbox("Select Target Flagged Asset for Live AI Diagnosis", banned_breakdown_trucks)
+        selected_truck = st.selectbox("Select a flagged truck", banned_breakdown_trucks)
         
         # Pull the absolute LATEST database row for this specific truck to auto-populate sliders
         latest_truck_log = highway_stalls_df[highway_stalls_df["truck_id"] == selected_truck].sort_values(by="timestamp", ascending=False).iloc[0]
@@ -186,11 +190,11 @@ with input_col1:
         st.selectbox("Select Target Flagged Asset for Live AI Diagnosis", [selected_truck])
 
     # Sliders inherit starting values from the selected truck!
-    speed_input = st.slider("Current Vehicle Speed (KM/H)", min_value=0, max_value=110, value=default_speed)
-    temp_input = st.slider("Engine Block Thermal Sensor (°C)", min_value=40, max_value=140, value=int(default_temp))
-    service_input = st.number_input("Cumulative Operational Running Hours Since Service Check", value=default_service)
-    route_dist_input = st.number_input("Assigned Route Distance Framework (KM)", value=int(default_total_dist))
-    covered_dist_input = st.number_input("Current Odometer Distance Covered on Route (KM)", value=int(default_covered_dist))
+    speed_input = st.slider("Vehicle Speed (km/h)", min_value=0, max_value=110, value=default_speed)
+    temp_input = st.slider("Engine Temperature (°C)", min_value=40, max_value=140, value=int(default_temp))
+    service_input = st.number_input("Hours Since Last Service", value=default_service)
+    route_dist_input = st.number_input("Total Route Distance (km)", value=int(default_total_dist))
+    covered_dist_input = st.number_input("Distance Covered (km)", value=int(default_covered_dist))
     
     if st.button("Run System Component Risk Check"):
         active_driver = assign_driver_to_truck(selected_truck)
@@ -212,13 +216,13 @@ with input_col1:
             st.success(f"✅ Safe Operating Tolerances Verified. Nominal Breakdown Variance: {round(risk * 100, 2)}%")
 
 with input_col2:
-    st.subheader("⏱️ Transit Corridor Duration & Fuel Integrity Engine")
+    st.subheader("⏱️ Trip Duration & Fuel Level Check")
     
     # Filter ONLY Truck IDs that have a confirmed Fuel Theft Anomaly flag in the database
     theft_target_trucks = sorted(theft_anomalies_df["truck_id"].unique().tolist())
     
     if theft_target_trucks:
-        selected_truck_2 = st.selectbox("Select Flagged Security Target for Integrity Analysis", theft_target_trucks)
+        selected_truck_2 = st.selectbox("Select a truck with a fuel level drop", theft_target_trucks)
         
         # Pull the absolute LATEST database record for this flagged theft asset
         latest_theft_log = theft_anomalies_df[theft_anomalies_df["truck_id"] == selected_truck_2].sort_values(by="timestamp", ascending=False).iloc[0]
@@ -241,7 +245,7 @@ with input_col2:
     except ValueError:
         route_index = 0
 
-    target_corridor = st.selectbox("Assign Downstream Product Transit Corridor Axis", corridor_options, index=route_index)
+    target_corridor = st.selectbox("Route Corridor", corridor_options, index=route_index)
     
     # Status keys are handled dynamically to account for background string variations
     status_options = ["in transit", "in transit (stopped/unscheduled)", "idle at depot", "under maintenance", "off-duty"]
@@ -250,7 +254,7 @@ with input_col2:
     except ValueError:
         status_index = 1
 
-    live_fleet_status = st.selectbox("Current Operational Vehicle Log Status", [s.title() for s in status_options], index=status_index)
+    live_fleet_status = st.selectbox("Vehicle Status", [s.title() for s in status_options], index=status_index)
     
     distance_indexer = {"Lagos-Ibadan Expressway Corridor": 130.0, "Port Harcourt-Aba Road Corridor": 65.0, "Sagamu-Benin Express Corridor": 260.0}
     selected_km = distance_indexer[target_corridor]
